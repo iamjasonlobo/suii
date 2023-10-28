@@ -3,12 +3,15 @@ import './App.css';
 
 const API_KEY = import.meta.env.VITE_APP_API_KEY;
 const RECORDS_PER_PAGE = 20;
+import { useNavigate } from 'react-router-dom';
+
 
 const App = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [weeklyStats, setWeeklyStats] = useState({ matches: 0, goals: 0, extraTimeMatches: 0 });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,29 +37,7 @@ const App = () => {
 
     fetchData();
   }, []);
-
-  useEffect(() => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-    const weeklyMatches = matches.filter(match => {
-      const matchDate = new Date(match.fixture.date);
-      return matchDate >= startOfWeek && matchDate <= endOfWeek && (match.teams.home.name === 'Manchester City' || match.teams.away.name === 'Manchester City');
-    });
-
-const weeklyGoals = weeklyMatches.reduce((total, match) => {
-  return total + (match.teams.home.name === 'Manchester City' ? match.goals.home : 0)
-               + (match.teams.away.name === 'Manchester City' ? match.goals.away : 0);
-}, 0);
-
-
-    const extraTimeMatches = weeklyMatches.filter(match => match.score.extratime.home !== null).length;
-
-    setWeeklyStats({ matches: weeklyMatches.length, goals: weeklyGoals, extraTimeMatches });
-  }, [matches]);
+  
 
   if (loading) {
     return <div>Loading...</div>;
@@ -83,63 +64,59 @@ const endIndex = startIndex + RECORDS_PER_PAGE;
 const displayedMatches = sortedMatches.slice(startIndex, endIndex);
 
 const totalPages = Math.ceil(sortedMatches.length / RECORDS_PER_PAGE);
+console.log(weeklyStats)
   return (
+    
     <>
-      <div className='header'>
-        <div className='logo'>suii</div>
-        <div>
-          <ul>
-            <li>Dashboard</li>
-            <li>Search</li>
-            <li>About</li>
-          </ul>
-        </div>
-      </div>
-
       <div>
         <h4>Manchester City | Last Week Recap</h4>
         <div className='summary-container'>
           <div className='summary-card'>
-            <h1>{weeklyStats.matches}</h1>
+            
+            <h1>#</h1>
             <h4>Matches</h4>
           </div>
           <div className='summary-card'>
-            <h1>{weeklyStats.goals}</h1>
+            <h1>#</h1>
             <h4>Goals</h4>
           </div>
           <div className='summary-card'>
-            <h1>{weeklyStats.extraTimeMatches}</h1>
+            <h1>#</h1>
             <h4>Extra Time Matches</h4>
           </div>
         </div>
       </div>
       <table className='matches-table'>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Match</th>
-            <th>Goals</th>
-            <th>Extra Time</th>
-          </tr>
-        </thead>
+      <thead>
+  <tr>
+    <th>Date</th>
+    <th>Match</th>
+    <th>Goals</th>
+    <th>Extra Time</th>
+    <th>Details</th>
+  </tr>
+</thead>
         <tbody>
-          {displayedMatches.map((match, index) => {
-            const dateObject = new Date(match.fixture.date);
-            const formattedDate = dateObject.toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric'
-            });
-            return (
-              <tr key={index}>
-                <td>{formattedDate}</td>
-                <td>{match.teams.home.name} v {match.teams.away.name}</td>
-                <td>{match.goals.home} - {match.goals.away}</td>
-                <td>{match.score.extratime.home !== null ? 'Yes' : 'No'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
+  {displayedMatches.map((match, index) => {
+    const dateObject = new Date(match.fixture.date);
+    const formattedDate = dateObject.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    return (
+      <tr key={index}>
+        <td>{formattedDate}</td>
+        <td>{match.teams.home.name} v {match.teams.away.name}</td>
+        <td>{match.goals.home} - {match.goals.away}</td>
+        <td>{match.score.extratime.home !== null ? 'Yes' : 'No'}</td>
+        <td>
+          <button onClick={() => navigate(`/matchDetails/${match.fixture.id}`)}>ℹ️</button>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
       </table>
       <div className="pagination">
         <button onClick={() => setCurrentPage(prevPage => Math.max(prevPage - 1, 1))} disabled={currentPage === 1}>
